@@ -10,20 +10,33 @@ class Subplotter:
         setattr(self, f"axes_all{self.current_figure}", None)
         
     
-    def create_figure(self, figure = None):
-        if figure == None:
-            used_figure = self.current_figure
-            
-        else:
-            used_figure = figure
-        all_axes = getattr(self, f"axes{self.current_figure}")
-        rows, cols = best_layout(len(all_axes))
-        fig, axes = plt.subplots(nrows=rows, ncols=cols)
-        setattr(self, f"fig{used_figure}", fig)
-        setattr(self, f"axes_all{used_figure}", axes)
-        self.all_figures.append(getattr(self, f"fig{used_figure}"))
-        self.all_axes.append(getattr(self, f"axes_all{used_figure}"))
+
         
+    def update_fig(self, figure, axes_list):
+        rows, cols = best_layout(len(axes_list))
+        fig, axes = plt.subplots(nrows=rows, ncols=cols)
+        for ax in fig.axes:
+            fig.delaxes(ax)
+
+        # Add new axes from axes_list
+        for ax in axes_list:
+            fig._axstack.add(fig._make_key(ax), ax)
+        # modify class attributes
+        if hasattr(self, f"fig{figure}"):
+            given_fig = getattr(self, f"fig{figure}")
+        else:
+            setattr(self, f"fig{figure}", fig)
+            setattr(self, f"axes_all{figure}", axes)
+            given_fig = getattr(self, f"fig{figure}")
+            
+        if given_fig in self.all_figures:
+            pass
+        else:
+            self.all_figures.append(getattr(self, f"fig{figure}"))
+   #     self.all_axes.append(getattr(self, f"axes_all{figure}"))
+
+        
+    
     
     def set_attribute(self, figure):
         if not hasattr(self, f"axes{figure}"):
@@ -36,9 +49,11 @@ class Subplotter:
             pass
         else:
             self.current_figure = figure
+        
         self.set_attribute(figure)
         axes_list = getattr(self, f"axes{figure}")
         axes_list.append(ax)
+        self.update_fig(figure, axes_list)
         
      
      
